@@ -41,15 +41,22 @@ static void print_prompt(void)
 static void shell_list_files(void)
 {
     uint32_t index;
+    uint8_t found_entry = 0;
     dirent_t *entry;
 
     if (fs_root == 0) {
         vga_puts("VFS unavailable\n", 0x0C);
         return;
     }
+    open_fs(fs_root);
     for (index = 0; (entry = readdir_fs(fs_root, index)) != 0; ++index) {
         vga_puts(entry->name, 0x0F);
         vga_puts("\n", 0x0F);
+        found_entry = 1;
+    }
+    close_fs(fs_root);
+    if (!found_entry) {
+        vga_puts("(empty)\n", 0x0F);
     }
 }
 

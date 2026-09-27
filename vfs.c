@@ -25,6 +25,23 @@ static void copy_name(char destination[FS_NAME_MAX], const char *source)
     destination[index] = '\0';
 }
 
+static uint32_t vfs_memory_read(fs_node_t *node, uint32_t offset, uint32_t size,
+                                uint8_t *buffer)
+{
+    uint32_t index;
+
+    if (offset >= node->length) {
+        return 0;
+    }
+    if (size > node->length - offset) {
+        size = node->length - offset;
+    }
+    for (index = 0; index < size; ++index) {
+        buffer[index] = node->data[offset + index];
+    }
+    return size;
+}
+
 static dirent_t *vfs_readdir(fs_node_t *node, uint32_t index)
 {
     fs_node_t *child;
@@ -171,5 +188,35 @@ int32_t vfs_add_node(fs_node_t *parent, fs_node_t *node)
         node->readdir = vfs_readdir;
     }
     copy_name(node->dirent.name, node->name);
+    return 0;
+}
+
+int32_t vfs_create_file(const char *name, const uint8_t *data, uint32_t length)
+{
+    fs_node_t *node;
+    uint32_t index;
+
+    if (fs_root == 0 || name == 0 || name[0] == '\0' ||
+        (length != 0 && data == 0)) {
+        return -1;
+    }
+
+    node = (fs_node_t *)kmalloc((uint32_t)sizeof(fs_node_t));
+    if (node == 0) {
+        return -1;
+    }
+    for (index = 0; index < sizeof(*node); ++index) {
+        ((uint8_t *)node)[index] = 0;
+    }
+    copy_name(node->name, name);
+    node->flags = FS_FILE;
+    node->length = length;
+    node->data = data;
+    node->read = vfs_memory_read;
+
+    if (vfs_add_node(fs_root, node) != 0) {
+        kfree(node);
+        return -1;
+    }
     return 0;
 }

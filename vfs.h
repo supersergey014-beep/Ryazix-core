@@ -37,7 +37,7 @@ struct fs_node_struct {
     fs_readdir_t readdir;
     fs_node_t *children;
     fs_node_t *next;
-    uint8_t *data;
+    const uint8_t *data;
     dirent_t dirent;
 };
 
@@ -54,5 +54,6 @@ dirent_t *readdir_fs(fs_node_t *node, uint32_t index);
 fs_node_t *finddir_fs(fs_node_t *node, const char *name);
 fs_node_t *resolve_path_fs(const char *path);
 int32_t vfs_add_node(fs_node_t *parent, fs_node_t *node);
+int32_t vfs_create_file(const char *name, const uint8_t *data, uint32_t length);
 
 #endif

@@ -26,6 +26,7 @@ typedef struct tar_header_struct {
 } __attribute__((packed)) tar_header_t;
 
 static uint32_t next_inode = 1;
+static const uint8_t default_readme[] = "Hello from Ryazix VFS!";
 
 static uint32_t bounded_length(const char *string, uint32_t maximum)
 {
@@ -186,7 +187,14 @@ int32_t initialise_initrd_range(uint32_t location, uint32_t size)
 {
     uint32_t offset = 0;
 
-    if (fs_root == 0 || location == 0 || size < TAR_BLOCK_SIZE) {
+    if (fs_root == 0) {
+        return -1;
+    }
+    if (location == 0 && size == 0) {
+        return vfs_create_file("readme.txt", default_readme,
+                               sizeof(default_readme) - 1U);
+    }
+    if (location == 0 || size < TAR_BLOCK_SIZE) {
         return -1;
     }
     while (offset <= size - TAR_BLOCK_SIZE) {
@@ -229,5 +237,8 @@ int32_t initialise_initrd_range(uint32_t location, uint32_t size)
 
 int32_t initialise_initrd(uint32_t location)
 {
+    if (location == 0) {
+        return initialise_initrd_range(0, 0);
+    }
     return initialise_initrd_range(location, INITRD_MAX_SIZE);
 }

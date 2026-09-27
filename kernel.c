@@ -22,22 +22,14 @@
 static void task_a(void)
 {
     for (;;) {
-        uint32_t start = timer_ticks;
-        (void)syscall(SYS_WRITE, (uint32_t)"Task A running\n", 0);
-        while (timer_ticks - start < 100U) {
-            __asm__ volatile("hlt");
-        }
+        __asm__ volatile("hlt");
     }
 }
 
 static void task_b(void)
 {
     for (;;) {
-        uint32_t start = timer_ticks;
-        (void)syscall(SYS_WRITE, (uint32_t)"Task B running\n", 0);
-        while (timer_ticks - start < 100U) {
-            __asm__ volatile("hlt");
-        }
+        __asm__ volatile("hlt");
     }
 }
 
@@ -109,7 +101,6 @@ void vga_puts(const char *str, uint8_t color)
 
 void kernel_main(uint32_t multiboot_magic, uint32_t multiboot_info_address)
 {
-    const uint8_t color = 0x0F;
     uint32_t memory_size = 0;
     uint32_t initrd_location = 0;
     uint32_t initrd_size = 0;
@@ -151,29 +142,16 @@ void kernel_main(uint32_t multiboot_magic, uint32_t multiboot_info_address)
     vmm_init();
     kheap_init();
     vfs_init();
-    if (initrd_location != 0 && initrd_size != 0) {
-        (void)initialise_initrd_range(initrd_location, initrd_size);
-    }
+    (void)initialise_initrd_range(initrd_location, initrd_size);
     task_init();
     syscall_init();
     create_task(task_a);
     create_task(task_b);
-    vga_puts("==========================================\n", color);
-    vga_puts("           Welcome to Ryazix OS           \n", color);
-    vga_puts("==========================================\n", color);
-    vga_puts("Phase 1: Boot sequence complete.", color);
-    vga_puts("\nGDT and IDT initialized successfully.", color);
-    vga_puts("\nHardware interrupts and devices initialized.", color);
     heap_test = kmalloc(64);
     if (heap_test != 0) {
         ((uint8_t *)heap_test)[0] = 0x5A;
         kfree(heap_test);
-        vga_puts("\nMemory management and Paging active.", color);
-    } else {
-        vga_puts("\nKernel heap allocation failed.", 0x0C);
     }
-    vga_puts("\nMultitasking and Syscall vector 0x80 active.", color);
-    vga_puts("\nWelcome to the Ryazix shell.\n", color);
 
     __asm__ volatile("sti");
     shell_run();
