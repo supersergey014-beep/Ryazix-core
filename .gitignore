@@ -6,6 +6,8 @@
 *.ko
 *.obj
 *.elf
+/build/
+/ryazix.bin
 
 # Linker output
 *.ilk
